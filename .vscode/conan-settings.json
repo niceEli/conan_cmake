@@ -1,0 +1,44 @@
+{
+    "profiles": [
+        {
+            "name": "conan-cmake-Profiles found in the cache:\r",
+            "conanFile": "/c:/Users/niceEli/Downloads/conan-cmake/conanfile.py",
+            "profile": "Profiles found in the cache:\r",
+            "installArg": "",
+            "buildArg": "",
+            "createUser": "disroop",
+            "createChannel": "development",
+            "createArg": ""
+        },
+        {
+            "name": "test_package-Profiles found in the cache:\r",
+            "conanFile": "/c:/Users/niceEli/Downloads/conan-cmake/test_package/conanfile.py",
+            "profile": "Profiles found in the cache:\r",
+            "installArg": "",
+            "buildArg": "",
+            "createUser": "disroop",
+            "createChannel": "development",
+            "createArg": ""
+        },
+        {
+            "name": "conan-cmake-default\r",
+            "conanFile": "/c:/Users/niceEli/Downloads/conan-cmake/conanfile.py",
+            "profile": "default\r",
+            "installArg": "",
+            "buildArg": "",
+            "createUser": "disroop",
+            "createChannel": "development",
+            "createArg": ""
+        },
+        {
+            "name": "test_package-default\r",
+            "conanFile": "/c:/Users/niceEli/Downloads/conan-cmake/test_package/conanfile.py",
+            "profile": "default\r",
+            "installArg": "",
+            "buildArg": "",
+            "createUser": "disroop",
+            "createChannel": "development",
+            "createArg": ""
+        }
+    ]
+}
