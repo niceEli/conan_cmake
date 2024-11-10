@@ -2,6 +2,7 @@
   "scripts": {
     "install": "conan install . --build=missing",
     "build": "cmake -S . --preset conan-debug",
-    "build:release": "cmake -S . --preset conan-release"
+    "build:d": "cmake -S . --preset conan-default",
+    "build:r": "cmake -S . --preset conan-release"
   }
 }
