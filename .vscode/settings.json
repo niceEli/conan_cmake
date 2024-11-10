@@ -6,5 +6,6 @@
     "activityBar.background": "#45260A",
     "titleBar.activeBackground": "#61350E",
     "titleBar.activeForeground": "#FDF9F4"
-  }
+  },
+  "terminal.integrated.defaultProfile.linux": "bash",
 }
