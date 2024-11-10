@@ -12,3 +12,4 @@ CMakeUserPresets.json
 node_modules
 .vscode/launch.json
 .mypy_cache/
+.vscode/.conan_tools/info.log

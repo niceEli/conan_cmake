@@ -1,8 +1,6 @@
 {
   "scripts": {
-    "c:install": "conan install . --output-folder=build --build=missing",
-    "c:install:win64": "conan install . --output-folder=build --build=missing -pr:a=./.conanprofiles/win64-conanprofile-debug.ini",
-    "c:install:win64:release": "conan install . --output-folder=build --build=missing -pr:a=./.conanprofiles/win64-conanprofile-release.ini",
+    "install": "conan install . --build=missing",
     "build": "cmake -S . --preset conan-debug",
     "build:release": "cmake -S . --preset conan-release"
   }
