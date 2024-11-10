@@ -1,3 +1,10 @@
 {
-  "terminal.integrated.defaultProfile.windows": "PowerShell"
+  "workbench.colorCustomizations": {
+    "statusBar.noFolderForeground": "#ffffff",
+    "statusBar.noFolderBackground": "#01182e",
+    "statusBar.debuggingBackground": "#CC0066",
+    "activityBar.background": "#45260A",
+    "titleBar.activeBackground": "#61350E",
+    "titleBar.activeForeground": "#FDF9F4"
+  }
 }

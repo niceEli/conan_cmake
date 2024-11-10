@@ -7,27 +7,31 @@ if (POLICY CMP0141)
 endif()
 
 file(GLOB_RECURSE src
-      RELATIVE ${CMAKE_SOURCE_DIR}
-      CONFIGURE_DEPENDS
-      "./src/*.h"
-      "./src/*.c"
-      "./src/*.hpp"
-      "./src/*.cpp"
+  RELATIVE ${CMAKE_SOURCE_DIR}
+  CONFIGURE_DEPENDS
+  "./src/*.h"
+  "./src/*.c"
+  "./src/*.hpp"
+  "./src/*.cpp"
 )
 
 list(REMOVE_ITEM src "./src/main.cpp")
 
 add_executable (${PROJECT_NAME} "./src/main.cpp" ${src})
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
+
 # Packages Finding Start
 
 find_package(fmt REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(VulkanHeaders REQUIRED)
 
 # Packages Finding End
 ##########################
 # Packages Linking Start
 
-target_link_libraries(${PROJECT_NAME} fmt::fmt)
+target_link_libraries(${PROJECT_NAME} fmt::fmt glfw vulkan-headers::vulkan-headers)
 
 # Packages Linking End
 
@@ -37,11 +41,8 @@ install(TARGETS conan-cmake DESTINATION "."
   LIBRARY DESTINATION lib
   )
 
-############## Build SHADERS #######################
+## Build Shaders
 
-# Find all vertex and fragment sources within shaders directory
-# taken from VBlancos vulkan tutorial
-# https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters/CMakeLists.txt
 find_program(GLSL_VALIDATOR glslangValidator HINTS 
 ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} 
 /bin
@@ -53,93 +54,64 @@ $ENV{VULKAN_SDK}/Bin32/
 
 message(STATUS "glslangValidator: ${GLSL_VALIDATOR}")
 
+set(SHADER_SOURCE_DIR "${PROJECT_SOURCE_DIR}/shaders")
+
 # get all .vert and .frag files in shaders directory
 file(GLOB_RECURSE GLSL_SOURCE_FILES
 CONFIGURE_DEPENDS
-"${PROJECT_SOURCE_DIR}/shaders/*.frag"
-"${PROJECT_SOURCE_DIR}/shaders/*.vert"
-"${PROJECT_SOURCE_DIR}/shaders/*.comp"
-"${PROJECT_SOURCE_DIR}/shaders/*.glsl"
+"${SHADER_SOURCE_DIR}/*.frag"
+"${SHADER_SOURCE_DIR}/*.vert"
+"${SHADER_SOURCE_DIR}/*.comp"
+"${SHADER_SOURCE_DIR}/*.glsl"
+"${SHADER_SOURCE_DIR}/*.comp"
+"${SHADER_SOURCE_DIR}/*.mesh"
 )
 
 message(STATUS "GLSL_SOURCE_FILES: ${GLSL_SOURCE_FILES}")
 
-# Assume BUILT_FILES_DIR is defined elsewhere or set it here
-set(BUILT_FILES_DIR "${CMAKE_BINARY_DIR}/shaders")
+if(EXISTS "${CMAKE_SOURCE_DIR}/build/Shaders")
+  file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/build/Shaders")
+endif()
+set(SHADER_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/build/Shaders")
+file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 
-# Create output directory
-file(MAKE_DIRECTORY ${BUILT_FILES_DIR})
-
-# List to store SPIR-V files
-set(SPIRV_BINARY_FILES "")
-
-# Create custom commands and dependencies for each shader file
-foreach(GLSL ${GLSL_SOURCE_FILES})
-get_filename_component(FILE_NAME ${GLSL} NAME)
-set(SPIRV "${BUILT_FILES_DIR}/${FILE_NAME}.spv")
-
-add_custom_command(
-  OUTPUT ${SPIRV}
-  COMMAND ${GLSL_VALIDATOR} ${GLSL} -V -o ${SPIRV}
-  DEPENDS ${GLSL}
-  COMMENT "Compiling ${GLSL} to ${SPIRV}"
-  VERBATIM
-)
-
-list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+foreach(GLSL_FILE ${GLSL_SOURCE_FILES})
+  get_filename_component(FILENAME ${GLSL_FILE} NAME)
+  set(SPV_FILE "${SHADER_OUTPUT_DIR}/${FILENAME}.spv")
+  
+  add_custom_command(
+    OUTPUT ${SPV_FILE}
+    COMMAND ${GLSL_VALIDATOR} ${GLSL_FILE} -V -o ${SPV_FILE}
+    DEPENDS ${GLSL_FILE}
+    COMMENT "Compiling shader ${GLSL_FILE} to ${SPV_FILE}"
+    VERBATIM
+  )
+  list(APPEND SPV_FILES ${SPV_FILE})
 endforeach()
 
-# Create a custom target that depends on all the SPIR-V files
-add_custom_target(compile_shaders ALL DEPENDS ${SPIRV_BINARY_FILES})
-
-# Ensure the main project depends on the compile_shaders target
-add_dependencies(${PROJECT_NAME} compile_shaders)
-
-message(STATUS "BUILT_SHA_FILES_DIR: ${BUILT_FILES_DIR}")
+add_custom_target(shaders ALL DEPENDS ${SPV_FILES})
+add_dependencies(${PROJECT_NAME} shaders)
 
 ## end of build shaders
 
-## start of stack overflow copy res jank
-
 # Define the source and destination directories
 set(PUBLIC_DIR "${CMAKE_SOURCE_DIR}/public")
-set(BUILT_RES_DIR "${CMAKE_BINARY_DIR}")  # Destination is the root of the binary directory
 
-# List all files to copy
-file(GLOB_RECURSE RESOURCE_FILES 
-  CONFIGURE_DEPENDS
-  "${PUBLIC_DIR}/**"
+# Public Folder
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  ${PUBLIC_DIR}
+  $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
-# Debug message to list all resource files found
-message(STATUS "Resource files to be copied:")
-foreach(file ${RESOURCE_FILES})
-  message(STATUS " - ${file}")
-endforeach()
-
-# Create a custom command to copy files at runtime
-add_custom_command(
-  TARGET ${PROJECT_NAME}
-  PRE_BUILD  # This runs before the project executable is built
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILT_RES_DIR}"
-  COMMAND ${CMAKE_COMMAND} -E echo "Copying resources to binary directory..."
-  COMMAND ${CMAKE_COMMAND} -E copy_directory "${PUBLIC_DIR}" "${BUILT_RES_DIR}"
-  COMMENT "Copying resources to binary directory"
+# Remove .gitkeep file from the public folder
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E rm -f "$<TARGET_FILE_DIR:${PROJECT_NAME}>/.gitkeep"
 )
 
-# Custom command to copy each resource file with debug messages
-foreach(file ${RESOURCE_FILES})
-  get_filename_component(file_name ${file} NAME)  # Get the base file name
-  add_custom_command(
-      TARGET ${PROJECT_NAME}
-      PRE_BUILD
-      COMMAND ${CMAKE_COMMAND} -E echo "Copying ${file} to ${BUILT_RES_DIR}/${file_name}"
-      COMMAND ${CMAKE_COMMAND} -E copy "${file}" "${BUILT_RES_DIR}/${file_name}"
-  )
-endforeach()
-
-# Create a custom target that depends on the resources
-add_custom_target(copy_resources ALL DEPENDS ${RESOURCE_FILES})
-
-# Ensure that the copy_resources target runs before your main project
-add_dependencies(copy_resources ${PROJECT_NAME})
+# Shaders Folder
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  "${CMAKE_SOURCE_DIR}/build/Shaders"
+  "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+)
