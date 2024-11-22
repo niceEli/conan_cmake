@@ -3,12 +3,12 @@ from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps # t
 
 
 class fatalEngineRecipe(ConanFile):
-  name = "conan-cmake"
+  name = "conan-cmake" # Change "name", "version" and "description" as needed
   version = "1.0.0"
   package_type = "application"
 
   # Optional metadata
-  license = "MIT"
+  license = "MIT" # Also Change Licence And Author Too
   author = "niceEli"
 
   # Binary configuration
